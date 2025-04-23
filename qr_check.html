@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Tabanlı Giriş Kontrolü</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #4f46e5;
+    }
+    #qr-reader {
+      width: 320px;
+      margin: 20px auto;
+    }
+    .result {
+      margin-top: 30px;
+      font-size: 18px;
+      padding: 20px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+    .valid {
+      background-color: #dcfce7;
+      color: #15803d;
+      border: 2px solid #15803d;
+    }
+    .invalid {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 2px solid #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <h1>📷 QR Kod ile Etkinlik Girişi</h1>
+  <div id="qr-reader"></div>
+  <div id="result" class="result"></div>
+
+  <script>
+    const sheetID = "1AdnG6Zi2mZPk9iyG3_C9VoRz0YDZEVWjSlrcLeMSsT0";
+    const sheetURL = `https://opensheet.elk.sh/${sheetID}/1`;
+    let kabulEdilenler = [];
+  
+    // Google Sheet'ten verileri çek
+    fetch(sheetURL)
+      .then(res => res.json())
+      .then(data => {
+        kabulEdilenler = data
+          .filter(row => row["Onay Durumu"].trim().toUpperCase() === "EVET")
+          .map(row =>
+            `${row["Ad"].trim().toLowerCase()} ${row["Soyad"].trim().toLowerCase()} ${row["Mail"].trim().toLowerCase()}`
+          );
+        console.log("Kabul edilenler yüklendi:", kabulEdilenler);
+      });
+  
+    // QR okuyucu başarı
+    function onScanSuccess(decodedText, decodedResult) {
+      const resultBox = document.getElementById("result");
+      const cleanedText = decodedText.trim().toLowerCase().replace(/\s+/g, ' ');
+  
+      if (kabulEdilenler.includes(cleanedText)) {
+        resultBox.innerHTML = "✅ <strong>GİRİŞ ONAYLANDI</strong><br>Etkinliğe giriş yapabilirsiniz.";
+        resultBox.className = "result valid";
+      } else {
+        resultBox.innerHTML = "❌ <strong>GİRİŞ REDDEDİLDİ</strong><br>Kayıt bulunamadı veya onaylanmamış.";
+        resultBox.className = "result invalid";
+      }
+      resultBox.style.display = "block";
+    }
+  </script>  
+</body>
+</html>
